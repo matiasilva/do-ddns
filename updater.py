@@ -63,13 +63,13 @@ if has_record:
     }
     res = requests.post(API_ENDPOINT, json=payload, auth=BearerAuth(AUTH_TOKEN))
     if res.status_code == 201:
-        logger.info("Record {res} creating successfully")
+        logger.info(f"Record {WHOLE_RECORD} created successfully")
     else:
         logger.info(f"Error with status code {res.status_code} occurred, record creation failed")
         sys.exit(1)
 
 # update the record
-record = req_json['domain_records'][0] if has_record else res.json()['domain_record']
+record = res.json()['domain_record'] if not has_record else req_json['domain_records'][0]
 id = record['id']
 old_ip = record['data']
 # compare IPs to avoid unnecessarily PUTing data (rate limiting)
