@@ -1,0 +1,12 @@
+# service file for do-ddns-updater
+
+[Unit]
+Description=Updates DNS records on Digital Ocean dynamically
+Wants=do-ddns-updater.timer
+
+[Service]
+Type=oneshot
+ExecStart=
+
+[Install]
+WantedBy=multi-user.target
