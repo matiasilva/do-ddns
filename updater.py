@@ -6,6 +6,10 @@ import requests
 import sys
 
 # user configs -- edit these
+AUTH_TOKEN=""
+RECORD_NAME=""
+DOMAIN_NAME=""
+WHOLE_RECORD=f"{RECORD_NAME}.{DOMAIN_NAME}"
 
 
 # globals
@@ -83,7 +87,7 @@ else:
     logger.info("Records do not match, updating")
     endpoint = f"{API_ENDPOINT}/{id}"
     payload = { "type": "A", "data": PUBLIC_IP}
-    res = requests.put(endpoint, json=payload)
+    res = requests.put(endpoint, json=payload, auth=BearerAuth(AUTH_TOKEN))
     if res.status_code == 200:
         logger.info("Update successful, exiting!")
     else:
