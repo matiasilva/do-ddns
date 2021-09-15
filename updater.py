@@ -54,9 +54,9 @@ if req.status_code != 200:
     sys.exit(1)
 
 req_json = req.json()
-has_record = req_json['meta']['total'] == 0
+has_record = req_json['meta']['total'] != 0
 
-if has_record:
+if not has_record:
     record = req_json['domain_records'][0]
     logger.info(f"Target record {WHOLE_RECORD} did not exist, creating")
     # create the record
