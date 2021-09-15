@@ -57,7 +57,6 @@ req_json = req.json()
 has_record = req_json['meta']['total'] != 0
 
 if not has_record:
-    record = req_json['domain_records'][0]
     logger.info(f"Target record {WHOLE_RECORD} did not exist, creating")
     # create the record
     payload = {
@@ -74,7 +73,7 @@ if not has_record:
         sys.exit(1)
 
 # update the record
-record = res.json()['domain_record'] if not has_record else record
+record = res.json()['domain_record'] if not has_record else req_json['domain_records'][0]
 id = record['id']
 old_ip = record['data']
 # compare IPs to avoid unnecessarily PUTing data (rate limiting)
