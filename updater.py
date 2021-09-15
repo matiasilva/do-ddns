@@ -50,8 +50,9 @@ logger.info(f"Found our IP: {PUBLIC_IP}")
 params = {"name": WHOLE_RECORD, "type": "A"}
 req = requests.get(API_ENDPOINT, params=params, auth=BearerAuth(AUTH_TOKEN))
 req_json = req.json()
+has_record = req_json['meta']['total'] == 0
 
-if req_json['meta']['total'] == 0:
+if has_record:
     logger.info(f"Target record {WHOLE_RECORD} did not exist, creating")
     # create the record
     payload = {
@@ -61,16 +62,27 @@ if req_json['meta']['total'] == 0:
     "ttl": 1800,
     }
     res = requests.post(API_ENDPOINT, json=payload, auth=BearerAuth(AUTH_TOKEN))
-else:
-    # update the record
-    record = req_json['domain_records'][0]
-    id = record['id']
-    old_ip = record['data']
-    # compare IPs to avoid rate limiting
-    if not (old_ip == PUBLIC_IP):
-        endpoint = f"{API_ENDPOINT}/{id}"
-        payload = { "type": "A", "data": PUBLIC_IP}
-        res = requests.put(endpoint, json=payload)
-        logger.info("Records do not match, updating")
+    if res.status_code == 201:
+        logger.info("Record {res} creating successfully")
     else:
-        logger.info("Existing record matched our IP, no update necessary")
+        logger.info(f"Error with status code {res.status_code} occurred, record creation failed")
+        sys.exit(1)
+
+# update the record
+record = req_json['domain_records'][0] if has_record else res.json()['domain_record']
+id = record['id']
+old_ip = record['data']
+# compare IPs to avoid unnecessarily PUTing data (rate limiting)
+if old_ip == PUBLIC_IP:
+    logger.info("Existing record matched public IP, no update necessary")
+else:
+    logger.info("Records do not match, updating")
+    endpoint = f"{API_ENDPOINT}/{id}"
+    payload = { "type": "A", "data": PUBLIC_IP}
+    res = requests.put(endpoint, json=payload)
+    if res.status_code == 200:
+        logger.info("Update successful, exiting!")
+    else:
+        logger.info(f"Error occurred with status {res.status_code}, exiting!")
+        sys.exit(1)
+
