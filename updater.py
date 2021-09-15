@@ -48,7 +48,7 @@ if req is None:
     sys.exit(1)
 
 PUBLIC_IP = req.text
-logger.info(f"Found our IP: {PUBLIC_IP}")
+logger.debug(f"Found our IP: {PUBLIC_IP}")
 
 # check if the record needs creating
 params = {"name": WHOLE_RECORD, "type": "A"}
@@ -73,7 +73,7 @@ if not has_record:
     if res.status_code == 201:
         logger.info(f"Record {WHOLE_RECORD} created successfully")
     else:
-        logger.info(f"Error with status code {res.status_code} occurred, record creation failed")
+        logger.error(f"Error with status code {res.status_code} occurred, record creation failed")
         sys.exit(1)
 
 # update the record
@@ -81,16 +81,14 @@ record = res.json()['domain_record'] if not has_record else req_json['domain_rec
 id = record['id']
 old_ip = record['data']
 # compare IPs to avoid unnecessarily PUTing data (rate limiting)
-if old_ip == PUBLIC_IP:
-    logger.info("Existing record matched public IP, no update necessary")
-else:
-    logger.info("Records do not match, updating")
+if old_ip != PUBLIC_IP:
+    logger.debug("Records do not match, updating")
     endpoint = f"{API_ENDPOINT}/{id}"
     payload = { "type": "A", "data": PUBLIC_IP}
     res = requests.put(endpoint, json=payload, auth=BearerAuth(AUTH_TOKEN))
     if res.status_code == 200:
-        logger.info("Update successful, exiting!")
+        logger.info("Updated IP from {old_ip} to {PUBLIC_IP} successfully, exiting!")
     else:
-        logger.info(f"Error occurred with status {res.status_code}, exiting!")
+        logger.error(f"Error occurred with status {res.status_code}, exiting!")
         sys.exit(1)
 
