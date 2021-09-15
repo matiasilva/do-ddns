@@ -49,10 +49,15 @@ logger.info(f"Found our IP: {PUBLIC_IP}")
 # check if the record needs creating
 params = {"name": WHOLE_RECORD, "type": "A"}
 req = requests.get(API_ENDPOINT, params=params, auth=BearerAuth(AUTH_TOKEN))
+if req.status_code != 200:
+    logger.error(f"Exiting after request error code {req.status_code}")
+    sys.exit(1)
+
 req_json = req.json()
 has_record = req_json['meta']['total'] == 0
 
 if has_record:
+    record = req_json['domain_records'][0]
     logger.info(f"Target record {WHOLE_RECORD} did not exist, creating")
     # create the record
     payload = {
@@ -69,7 +74,7 @@ if has_record:
         sys.exit(1)
 
 # update the record
-record = res.json()['domain_record'] if not has_record else req_json['domain_records'][0]
+record = res.json()['domain_record'] if not has_record else record
 id = record['id']
 old_ip = record['data']
 # compare IPs to avoid unnecessarily PUTing data (rate limiting)
